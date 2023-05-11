@@ -59,7 +59,7 @@ func ShortUrl(context *gin.Context) {
 }
 
 func Generater(context *gin.Context) {
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s", host, port, user, password, dbname)
+	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s", os.Getenv("pgHost"), os.Getenv("pgPort"), os.Getenv("pgUser"), os.Getenv("pgPassword"), os.Getenv("pgDbname"))
 	db, err := sql.Open("postgres", psqlconn)
 	if err != nil {
 		fmt.Println("Failed to connect to the database:", err)
