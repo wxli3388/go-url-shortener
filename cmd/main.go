@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -30,8 +31,7 @@ type Url struct {
 
 func ShortUrl(context *gin.Context) {
 	shortUrl := context.Param("shortUrl")
-
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s", host, port, user, password, dbname)
+	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s", os.Getenv("pgHost"), os.Getenv("pgPort"), os.Getenv("pgUser"), os.Getenv("pgPassword"), os.Getenv("pgDbname"))
 	db, err := sql.Open("postgres", psqlconn)
 	if err != nil {
 		fmt.Println("Failed to connect to the database:", err)
