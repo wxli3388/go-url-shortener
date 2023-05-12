@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+
 	router := gin.New()
 	router.LoadHTMLGlob("./../web/*")
 	router.GET("/", func(c *gin.Context) {
@@ -31,7 +32,7 @@ type Url struct {
 
 func ShortUrl(context *gin.Context) {
 	shortUrl := context.Param("shortUrl")
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s", os.Getenv("pgHost"), os.Getenv("pgPort"), os.Getenv("pgUser"), os.Getenv("pgPassword"), os.Getenv("pgDbname"))
+	psqlconn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s", os.Getenv("pgHost"), os.Getenv("pgPort"), os.Getenv("pgUser"), os.Getenv("pgPassword"), os.Getenv("pgDbname"))
 	db, err := sql.Open("postgres", psqlconn)
 	if err != nil {
 		fmt.Println("Failed to connect to the database:", err)
@@ -59,7 +60,7 @@ func ShortUrl(context *gin.Context) {
 }
 
 func Generater(context *gin.Context) {
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s", os.Getenv("pgHost"), os.Getenv("pgPort"), os.Getenv("pgUser"), os.Getenv("pgPassword"), os.Getenv("pgDbname"))
+	psqlconn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s", os.Getenv("pgHost"), os.Getenv("pgPort"), os.Getenv("pgUser"), os.Getenv("pgPassword"), os.Getenv("pgDbname"))
 	db, err := sql.Open("postgres", psqlconn)
 	if err != nil {
 		fmt.Println("Failed to connect to the database:", err)
@@ -68,7 +69,7 @@ func Generater(context *gin.Context) {
 	defer db.Close()
 
 	url := context.PostForm("url")
-	shortUrl := GetRandomStr(8)
+	shortUrl := GetRandomStr(6)
 	for i := 0; i < 3; i++ {
 		insertSql := `INSERT INTO "url-shortener" ("short", "origin") values ($1, $2)`
 		_, err = db.Exec(insertSql, shortUrl, url)
