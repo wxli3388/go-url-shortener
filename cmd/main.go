@@ -25,7 +25,7 @@ func main() {
 	router.GET("/:shortUrl", ShortUrl)
 	router.POST("/generate", Generater)
 
-	router.Run(":3388")
+	router.Run(":8080")
 }
 
 type Url struct {
@@ -38,14 +38,19 @@ func ShortUrl(context *gin.Context) {
 	psqlconn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s", os.Getenv("pgHost"), os.Getenv("pgPort"), os.Getenv("pgUser"), os.Getenv("pgPassword"), os.Getenv("pgDbname"))
 	db, err := sql.Open("postgres", psqlconn)
 	if err != nil {
-		fmt.Println("Failed to connect to the database:", err)
+		context.HTML(http.StatusOK, "index.html", gin.H{
+			"error": "Failed to connect to the database",
+		})
 		return
 	}
 	defer db.Close()
 
 	stmt, err := db.Prepare(`SELECT origin FROM "url-shortener" WHERE short=$1`)
 	if err != nil {
-		// log.Fatal(err)
+		context.HTML(http.StatusOK, "index.html", gin.H{
+			"error": "Something went wrong...",
+		})
+		return
 	}
 	defer stmt.Close()
 
@@ -58,7 +63,6 @@ func ShortUrl(context *gin.Context) {
 		return
 	}
 
-	fmt.Println(url)
 	context.Redirect(http.StatusMovedPermanently, url.Origin)
 }
 
@@ -66,7 +70,9 @@ func Generater(context *gin.Context) {
 	psqlconn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s", os.Getenv("pgHost"), os.Getenv("pgPort"), os.Getenv("pgUser"), os.Getenv("pgPassword"), os.Getenv("pgDbname"))
 	db, err := sql.Open("postgres", psqlconn)
 	if err != nil {
-		fmt.Println("Failed to connect to the database:", err)
+		context.HTML(http.StatusOK, "index.html", gin.H{
+			"error": "can't connect to database",
+		})
 		return
 	}
 	defer db.Close()
@@ -87,6 +93,7 @@ func Generater(context *gin.Context) {
 		context.HTML(http.StatusOK, "index.html", gin.H{
 			"error": err,
 		})
+		return
 	}
 
 	png, err := qrcode.Encode(context.Request.Host+"/"+shortUrl, qrcode.Medium, 256)
