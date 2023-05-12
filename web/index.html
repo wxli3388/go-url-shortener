@@ -16,6 +16,7 @@
             </form>
             {{if .shortUrl}}
                 <a href="/{{ .shortUrl }}">前往</a>
+                <img src="{{ .qrcode}}">
             {{end}}
             {{if .error}}
                 {{ .error }}

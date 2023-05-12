@@ -2,13 +2,16 @@ package main
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"fmt"
+	"html/template"
 	"math/rand"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+	"github.com/skip2/go-qrcode"
 )
 
 func main() {
@@ -69,23 +72,32 @@ func Generater(context *gin.Context) {
 	defer db.Close()
 
 	url := context.PostForm("url")
-	shortUrl := GetRandomStr(6)
+
 	for i := 0; i < 3; i++ {
+		shortUrl := GetRandomStr(6)
 		insertSql := `INSERT INTO "url-shortener" ("short", "origin") values ($1, $2)`
 		_, err = db.Exec(insertSql, shortUrl, url)
-		if err != nil {
-			context.HTML(http.StatusOK, "index.html", gin.H{
-				"error": err,
-			})
-			fmt.Println(err)
-			return
-		} else {
+		if err == nil {
 			break
 		}
 	}
 
+	if err != nil {
+		context.HTML(http.StatusOK, "index.html", gin.H{
+			"error": err,
+		})
+	}
+
+	png, err := qrcode.Encode(context.Request.Host+"/"+shortUrl, qrcode.Medium, 256)
+	if err != nil {
+		panic(err)
+	}
+
+	dataURI := "data:image/png;base64," + base64.StdEncoding.EncodeToString([]byte(png))
+
 	context.HTML(http.StatusOK, "index.html", gin.H{
 		"shortUrl": shortUrl,
+		"qrcode":   template.URL(dataURI),
 		"error":    "",
 	})
 }
