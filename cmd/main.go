@@ -73,8 +73,9 @@ func Generater(context *gin.Context) {
 
 	url := context.PostForm("url")
 
+	var shortUrl string
 	for i := 0; i < 3; i++ {
-		shortUrl := GetRandomStr(6)
+		shortUrl = GetRandomStr(6)
 		insertSql := `INSERT INTO "url-shortener" ("short", "origin") values ($1, $2)`
 		_, err = db.Exec(insertSql, shortUrl, url)
 		if err == nil {
