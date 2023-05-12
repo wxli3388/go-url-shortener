@@ -1,5 +1,6 @@
 # go-url-shortener
-golang url shortener
+- Generate a short URL and a qrcode image.
+- Redirect a short URL  to its original URL.
 
 https://golang-url-shortener.onrender.com/
 
