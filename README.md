@@ -9,5 +9,6 @@ Just a simplest way to generate short url.
 To avoid data collisions, generate a random string and use a unique key constraint in the database.
 
 # Todo
-- Use redis to improve performance
-- Change the way of generating short url
+- Use redis to improve performance.
+- Add shprt URL expired time.
+- Change the way of generating short url.
