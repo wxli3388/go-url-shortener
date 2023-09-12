@@ -1,17 +1,19 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"html/template"
 	"math/rand"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"github.com/skip2/go-qrcode"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -19,72 +21,104 @@ func main() {
 	router := gin.New()
 	router.LoadHTMLGlob("./../web/*")
 	router.GET("/", func(c *gin.Context) {
-		fmt.Println()
 		c.HTML(http.StatusOK, "index.html", nil)
 	})
-	router.GET("/:shortUrl", ShortUrl)
-	router.POST("/generate", Generater)
+	router.GET("/list", list)
+	router.GET("/:shortUrl", shortUrl)
+	router.POST("/generate", generater)
 
 	router.Run(":8080")
 }
 
-type Url struct {
-	Short  string
+type URLShortener struct {
 	Origin string
+	Short  string
+	Ctime  int64
 }
 
-func ShortUrl(context *gin.Context) {
+var dsn = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s TimeZone=Asia/Taipei", os.Getenv("pgHost"), os.Getenv("pgPort"), os.Getenv("pgUser"), os.Getenv("pgPassword"), os.Getenv("pgDbname"))
+
+func list(context *gin.Context) {
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		context.HTML(http.StatusOK, "list.html", gin.H{
+			"error": "Something went wrong...",
+		})
+	}
+	defer func() {
+		dbInstance, _ := db.DB()
+		_ = dbInstance.Close()
+	}()
+
+	var urlShorteners []URLShortener
+	db.Table("url-shortener").Find(&urlShorteners)
+	// for i, v := range urlShorteners {
+	// 	t := time.Unix(v.Ctime, 0)
+	// 	urlShorteners[i].CtimeStr = t.Format("2006-01-02 15:04:05")
+	// }
+	context.HTML(http.StatusOK, "list.html", gin.H{
+		"error": "",
+		"data":  urlShorteners,
+	})
+}
+
+func shortUrl(context *gin.Context) {
 	shortUrl := context.Param("shortUrl")
-	psqlconn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s", os.Getenv("pgHost"), os.Getenv("pgPort"), os.Getenv("pgUser"), os.Getenv("pgPassword"), os.Getenv("pgDbname"))
-	db, err := sql.Open("postgres", psqlconn)
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		context.HTML(http.StatusOK, "index.html", gin.H{
 			"error": "Failed to connect to the database",
 		})
 		return
 	}
-	defer db.Close()
+	defer func() {
+		dbInstance, _ := db.DB()
+		_ = dbInstance.Close()
+	}()
 
-	stmt, err := db.Prepare(`SELECT origin FROM "url-shortener" WHERE short=$1`)
-	if err != nil {
-		context.HTML(http.StatusOK, "index.html", gin.H{
-			"error": "Something went wrong...",
-		})
-		return
+	var result URLShortener
+
+	if err := db.Table("url-shortener").Where("short = ?", shortUrl).First(&result).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			context.HTML(http.StatusOK, "index.html", gin.H{
+				"error": "Short url not found",
+			})
+			return
+		}
 	}
-	defer stmt.Close()
-
-	var url Url
-	err = stmt.QueryRow(shortUrl).Scan(&url.Origin)
-	if err != nil {
-		context.HTML(http.StatusOK, "index.html", gin.H{
-			"error": "Doesn't find this short url",
-		})
-		return
-	}
-
-	context.Redirect(http.StatusMovedPermanently, url.Origin)
+	context.Redirect(http.StatusMovedPermanently, result.Origin)
 }
 
-func Generater(context *gin.Context) {
-	psqlconn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s", os.Getenv("pgHost"), os.Getenv("pgPort"), os.Getenv("pgUser"), os.Getenv("pgPassword"), os.Getenv("pgDbname"))
-	db, err := sql.Open("postgres", psqlconn)
+func generater(context *gin.Context) {
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		context.HTML(http.StatusOK, "index.html", gin.H{
-			"error": "can't connect to database",
+			"error": "Failed to connect to the database",
 		})
 		return
 	}
-	defer db.Close()
+	defer func() {
+		dbInstance, _ := db.DB()
+		_ = dbInstance.Close()
+	}()
 
 	url := context.PostForm("url")
 
 	var shortUrl string
 	for i := 0; i < 3; i++ {
 		shortUrl = GetRandomStr(6)
-		insertSql := `INSERT INTO "url-shortener" ("short", "origin") values ($1, $2)`
-		_, err = db.Exec(insertSql, shortUrl, url)
-		if err == nil {
+		newURL := URLShortener{
+			Short:  shortUrl,
+			Origin: url,
+			Ctime:  time.Now().Unix(),
+		}
+
+		if err := db.Table("url-shortener").Create(&newURL).Error; err != nil {
+			// Handle the error
+		} else {
 			break
 		}
 	}

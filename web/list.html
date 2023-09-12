@@ -10,21 +10,29 @@
             <h1>
                 Short url service
             </h1>
-            <form method="post" action="/generate">
-                <input type="text" name="url" placeholder="enter a url"><br>
-                <button class="btn btn-primary" value="submit">Generate</button>
-            </form>
-            {{if .shortUrl}}
-                <a href="/{{ .shortUrl }}">前往</a>
-                <img src="{{ .qrcode}}">
-            {{end}}
-            {{if .error}}
-                {{ .error }}
-            {{end}}
+            <table class="table">
+                <thead>
+                  <tr>
+                    <!-- <th scope="col">#</th> -->
+                    <th scope="col">短網址</th>
+                    <th scope="col">原始網址</th>
+                    <th scope="col">建立時間</th>
+                  </tr>
+                </thead>
+                <tbody>
+                    {{range .data}}
+                        <tr>
+                            <td><a href="{{.Short}}">{{.Short}}</a></td>
+                            <td><a href="{{.Origin}}">{{.Origin}}</a></td>
+                            <td>{{.Ctime}}</td>
+                        </tr>
+                    {{end}}
+                </tbody>
+            </table>
             <br>
             <br>
             <br>
-            <a href="/list">url 列表</a>
+            <a href="/">回首頁</a>
         </div>
     </body>
 </html>
