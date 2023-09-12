@@ -10,5 +10,5 @@ To avoid data collisions, generate a random string and use a unique key constrai
 
 # Todo
 - Use redis to improve performance.
-- Add shprt URL expired time.
-- Change the way of generating short url.
+- Add short URL expired time.
+- Change way of generating short url.
