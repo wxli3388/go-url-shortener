@@ -24,6 +24,7 @@ func (controller *UrlController) Generate(context *gin.Context) {
 		context.HTML(http.StatusOK, "index.html", gin.H{
 			"error": err,
 		})
+		return
 	}
 	qrcode, err := controller.urlService.GetQRcode(context.Request.Host, shortUrl)
 	context.HTML(http.StatusOK, "index.html", gin.H{
@@ -39,6 +40,7 @@ func (controller *UrlController) List(context *gin.Context) {
 		context.HTML(http.StatusOK, "list.html", gin.H{
 			"error": "Something went wrong...",
 		})
+		return
 	}
 	context.HTML(http.StatusOK, "list.html", gin.H{
 		"error": "",
@@ -52,6 +54,7 @@ func (controller *UrlController) Redirect(context *gin.Context) {
 		context.HTML(http.StatusOK, "index.html", gin.H{
 			"error": "Failed to connect to the database",
 		})
+		return
 	}
 	context.Redirect(http.StatusMovedPermanently, url)
 }
