@@ -51,7 +51,7 @@ func (service *UrlService) Generate(context *gin.Context) (string, error) {
 				Origin: url,
 				Ctime:  time.Now().Unix(),
 			}
-			if err := db.Table("`url-shortener`").Create(&newURL).Error; err == nil {
+			if err := db.Table("url-shortener").Create(&newURL).Error; err == nil {
 				return shortUrl, nil
 			}
 		}
